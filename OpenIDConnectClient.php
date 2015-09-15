@@ -474,15 +474,18 @@ class OpenIDConnectClient
       * @throws OpenIDConnectClientException
       * @return object
       */
-     private function get_key_for_header($keys, $header) {
+    private function get_key_for_header($keys, $header) {
          foreach ($keys as $key) {
-             if ($key->alg == $header->alg && $key->kid == $header->kid) {
-                 return $key;
-             }
+            if (property_exists($key, 'alg')) {
+                if ($key->alg === $header->alg && $key->kid === $header->kid) {
+                    return $key;
+                }
+            } else if ($key->kty === 'RSA' && $key->kid === $header->kid) { // IdentityServer3 does it like this
+                return $key;
+            }
          }
          throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
      }
-
 
     /**
      * @param array $keys
