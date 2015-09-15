@@ -615,7 +615,7 @@ class OpenIDConnectClient
 
         // Check to see if the attribute is already in memory
         if (array_key_exists($attribute, $this->userInfo)) {
-            return $this->userInfo->$attribute;
+            return $this->userInfo[$attribute];
         }
 
         $user_info_endpoint = $this->getProviderConfigValue("userinfo_endpoint");
@@ -624,12 +624,12 @@ class OpenIDConnectClient
         $user_info_endpoint .= "?schema=" . $schema
             . "&access_token=" . $this->accessToken;
 
-        $user_json = json_decode($this->fetchURL($user_info_endpoint));
+        $user_json = json_decode($this->fetchURL($user_info_endpoint), /*assoc*/ true);
 
         $this->userInfo = $user_json;
 
         if (array_key_exists($attribute, $this->userInfo)) {
-            return $this->userInfo->$attribute;
+            return $this->userInfo[$attribute];
         }
 
         return null;
