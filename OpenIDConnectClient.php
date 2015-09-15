@@ -171,11 +171,42 @@ class OpenIDConnectClient
      * @return bool
      * @throws OpenIDConnectClientException
      */
-    public function authenticate() {
+    public function authenticate($flow = 'authorization code') {
 
         // Do a preemptive check to see if the provider has thrown an error from a previous redirect
         if (isset($_REQUEST['error'])) {
             throw new OpenIDConnectClientException("Error: " . $_REQUEST['error'] . " Description: " . $_REQUEST['error_description']);
+        }
+
+        // If we have an ID token decode it and save available user info
+        if (isset($_REQUEST["id_token"])) {
+
+            $id_token = $_REQUEST["id_token"];
+            $claims = $this->decodeJWT($id_token, 1);
+
+            if ($this->canVerifySignatures()) {
+                if (!$this->verifyJWTsignature($id_token)) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature");
+                }
+            }
+
+            // If this is a valid claim
+            if ($this->verifyJWTclaims($claims)) {
+
+                // set user info from id token claims
+                $this->userInfo = array('name' => $claims->name,
+                                        'email' => $claims->email);
+
+                // Clean up the session a little
+                unset($_SESSION['openid_connect_nonce']);
+
+                // Success!
+                return true;
+
+            } else {
+                throw new OpenIDConnectClientException ("Unable to verify JWT claims");
+            }
+
         }
 
         // If we have an authorization code then proceed to request a token
@@ -207,6 +238,7 @@ class OpenIDConnectClient
                 }
             } else {
                 user_error("Warning: JWT signature verification unavailable.");
+                return false;
             }
 
             // If this is a valid claim
@@ -228,11 +260,16 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException ("Unable to verify JWT claims");
             }
 
-        } else {
-
-            $this->requestAuthorization();
-            return false;
         }
+
+        // If nothing has yet been set in the request, start auth flow
+        if ($flow === 'implicit') {
+            $this->requestImplicit();
+        } else {
+            $this->requestAuthorization();
+        }
+
+        return false;
 
     }
 
@@ -328,7 +365,7 @@ class OpenIDConnectClient
     }
 
     /**
-     * Start Here
+     * Redirects to authorization endpoint requesting an authorization code
      * @return void
      */
     private function requestAuthorization() {
@@ -363,6 +400,43 @@ class OpenIDConnectClient
 
         $this->redirect($auth_endpoint);
 
+    }
+
+    /**
+     * Redirects to authorization endpoint requesting an ID token
+     * @return void
+     */
+    private function requestImplicit() {
+
+        $auth_endpoint = $this->getProviderConfigValue("authorization_endpoint");
+
+        // Generate and store a nonce in the session
+        // The nonce is an arbitrary value
+        $nonce = $this->generateRandString();
+        $_SESSION['openid_connect_nonce'] = $nonce;
+
+        // State essentially acts as a session key for OIDC
+        $state = $this->generateRandString();
+        $_SESSION['openid_connect_state'] = $state;
+
+        $auth_params = array_merge($this->authParams, array(
+            'response_type' => 'id_token',
+            'response_mode' => 'form_post',
+            'redirect_uri' => $this->getRedirectURL(),
+            'client_id' => $this->clientID,
+            'nonce' => $nonce,
+            'state' => $state,
+            'scope' => 'openid profile email'
+        ));
+
+        // If the client has been registered with additional scopes
+        if (sizeof($this->scopes) > 0) {
+            $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
+        }
+
+        $auth_endpoint .= '?' . http_build_query($auth_params, null, '&');
+
+        $this->redirect($auth_endpoint);
     }
 
 
