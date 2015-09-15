@@ -60,7 +60,7 @@ function b64url2b64($base64url) {
     // "Shouldn't" be necessary, but why not
     $padding = strlen($base64url) % 4;
     if ($padding > 0) {
-	$base64url .= str_repeat("=", 4 - $padding);
+        $base64url .= str_repeat("=", 4 - $padding);
     }
     return strtr($base64url, '-_', '+/');
 }
@@ -194,20 +194,20 @@ class OpenIDConnectClient
                 throw new OpenIDConnectClientException("Unable to determine state");
             }
 
-	    if (!property_exists($token_json, 'id_token')) {
-		throw new OpenIDConnectClientException("User did not authorize openid scope.");
-	    }
+            if (!property_exists($token_json, 'id_token')) {
+                throw new OpenIDConnectClientException("User did not authorize openid scope.");
+            }
 
             $claims = $this->decodeJWT($token_json->id_token, 1);
 
-	    // Verify the signature
-	    if ($this->canVerifySignatures()) {
-		if (!$this->verifyJWTsignature($token_json->id_token)) {
-		    throw new OpenIDConnectClientException ("Unable to verify signature");
-		}
-	    } else {
-		user_error("Warning: JWT signature verification unavailable.");
-	    }
+            // Verify the signature
+            if ($this->canVerifySignatures()) {
+                if (!$this->verifyJWTsignature($token_json->id_token)) {
+                    throw new OpenIDConnectClientException ("Unable to verify signature");
+                }
+            } else {
+                user_error("Warning: JWT signature verification unavailable.");
+            }
 
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims)) {
@@ -217,7 +217,7 @@ class OpenIDConnectClient
 
                 // Save the access token
                 $this->accessToken = $token_json->access_token;
-                
+
                 // Save the refresh token, if we got one
                 if (isset($token_json->refresh_token)) $this->refreshToken = $token_json->refresh_token;
 
@@ -276,8 +276,8 @@ class OpenIDConnectClient
 
         return $this->providerConfig[$param];
     }
-    
-    
+
+
     /**
      * @param $url Sets redirect URL for auth flow
      */
@@ -293,7 +293,7 @@ class OpenIDConnectClient
      * @return string
      */
     public function getRedirectURL() {
-        
+
         // If the redirect URL has been set then return it.
         if (property_exists($this, 'redirectURL') && $this->redirectURL) {
             return $this->redirectURL;
@@ -408,7 +408,7 @@ class OpenIDConnectClient
          }
          throw new OpenIDConnectClientException('Unable to find a key for (algorithm, kid):' . $header->alg . ', ' . $header->kid . ')');
      }
- 
+
 
     /**
      * @param array $keys
@@ -477,7 +477,7 @@ class OpenIDConnectClient
                 $key = $this->get_key_for_header($jwks->keys, $header);
             } else {
                 $key = $this->get_key_for_alg($jwks->keys, 'RSA');
-            }        
+            }
             $verified = $this->verifyRSAJWTsignature($hashtype, $key,
                                                      $payload, $signature);
             break;
