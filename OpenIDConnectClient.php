@@ -123,6 +123,11 @@ class OpenIDConnectClient
     private $certPath;
 
     /**
+     * @var string if we aquire an id token it will be stored here
+     */
+    private $idToken;
+
+    /**
      * @var string if we aquire an access token it will be stored here
      */
     private $accessToken;
@@ -852,6 +857,13 @@ class OpenIDConnectClient
      */
     public function getAccessToken() {
         return $this->accessToken;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIdToken() {
+        return $this->idToken;
     }
 
     /**
