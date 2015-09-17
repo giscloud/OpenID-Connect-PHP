@@ -198,7 +198,10 @@ class OpenIDConnectClient
             // If this is a valid claim
             if ($this->verifyJWTclaims($claims)) {
 
-                // set user info from id token claims
+                // Save id token
+                $this->idToken = $id_token;
+
+                // Set user info from id token claims
                 $this->userInfo = array('name' => $claims->name,
                                         'email' => $claims->email);
 
@@ -586,7 +589,7 @@ class OpenIDConnectClient
      * @param int $section the section we would like to decode
      * @return object
      */
-    private function decodeJWT($jwt, $section = 0) {
+    public function decodeJWT($jwt, $section = 0) {
 
         $parts = explode(".", $jwt);
         return json_decode(base64url_decode($parts[$section]));
