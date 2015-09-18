@@ -281,6 +281,26 @@ class OpenIDConnectClient
 
     }
 
+
+    public function end_session($post_logout_redirect = null)
+    {
+        $end_session_endpoint = $this->getProviderConfigValue("end_session_endpoint");
+
+        if (isset($this->idToken))
+            $params = array('id_token_hint' => $this->idToken);
+
+
+        if (!is_null($post_logout_redirect)
+            && filter_var($post_logout_redirect, FILTER_VALIDATE_URL) !== false)
+        {
+            $params['post_logout_redirect_uri'] = $post_logout_redirect;
+        }
+
+        $end_session_endpoint .= '?' . http_build_query($params, null, '&');
+
+        $this->redirect($end_session_endpoint);
+    }
+
     /**
      * @param $scope - example: openid, given_name, etc...
      */
